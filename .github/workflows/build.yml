@@ -20,40 +20,53 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Ensure gradlew is executable
         run: chmod +x gradlew
 
-      - name: Create dummy .env file for build
+      - name: Create required .env files
         run: |
           touch .env
           echo "GEMINI_API_KEY=" >> .env
+          if [ ! -f .env.example ]; then
+            touch .env.example
+            echo "GEMINI_API_KEY=" >> .env.example
+          fi
 
       - name: Restore debug keystore
         run: |
           if [ -f debug.keystore.base64 ]; then
             base64 -d debug.keystore.base64 > debug.keystore
-          else
+          fi
+          if [ ! -f debug.keystore ]; then
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Build Debug APK and AAB Bundle
+        run: |
+          ./gradlew assembleDebug bundleDebug --no-daemon --stacktrace
 
-      - name: Build Debug AAB (Bundle)
-        run: ./gradlew bundleDebug --no-daemon --stacktrace
+      - name: Copy and rename outputs
+        run: |
+          mkdir -p build_release
+          cp app/build/outputs/apk/debug/*.apk build_release/DocScanner-debug.apk
+          cp app/build/outputs/bundle/debug/*.aab build_release/DocScanner-debug.aab
+          ls -lh build_release/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DocScanner-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: build_release/DocScanner-debug.apk
           retention-days: 14
 
       - name: Upload AAB Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DocScanner-AAB
-          path: app/build/outputs/bundle/debug/*.aab
+          path: build_release/DocScanner-debug.aab
           retention-days: 14
+

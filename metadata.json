@@ -1,0 +1,7 @@
+{
+  "name": "PDF Scanner – Scan, Compress & OCR",
+  "description": "Fast, private, lightweight PDF scanner, compressor, merger, splitter, OCR text extractor, and signature tool.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

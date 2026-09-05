@@ -30,10 +30,10 @@ jobs:
       - name: Create required .env files
         run: |
           touch .env
-          echo "GEMINI_API_KEY=" >> .env
+          echo 'GEMINI_API_KEY="dummy_key_for_ci_build"' >> .env
           if [ ! -f .env.example ]; then
             touch .env.example
-            echo "GEMINI_API_KEY=" >> .env.example
+            echo 'GEMINI_API_KEY="dummy_key_for_ci_build"' >> .env.example
           fi
 
       - name: Restore debug keystore
@@ -69,4 +69,3 @@ jobs:
           name: DocScanner-AAB
           path: build_release/DocScanner-debug.aab
           retention-days: 14
-

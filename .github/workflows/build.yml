@@ -45,15 +45,26 @@ jobs:
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
 
-      - name: Build Debug APK and AAB Bundle
+      - name: Restore release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          ./gradlew assembleDebug bundleDebug --no-daemon --stacktrace
+          echo "$KEYSTORE_BASE64" | base64 -d > my-upload-key.jks
+
+      - name: Build Debug APK and Release AAB Bundle
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleDebug bundleRelease --no-daemon --stacktrace
 
       - name: Copy and rename outputs
         run: |
           mkdir -p build_release
           cp app/build/outputs/apk/debug/*.apk build_release/DocScanner-debug.apk
-          cp app/build/outputs/bundle/debug/*.aab build_release/DocScanner-debug.aab
+          cp app/build/outputs/bundle/release/*.aab build_release/DocScanner-release.aab
           ls -lh build_release/
 
       - name: Upload APK Artifact
@@ -67,5 +78,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DocScanner-AAB
-          path: build_release/DocScanner-debug.aab
+          path: build_release/DocScanner-release.aab
           retention-days: 14
